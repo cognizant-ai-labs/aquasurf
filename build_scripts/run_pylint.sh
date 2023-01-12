@@ -25,7 +25,7 @@ for dir in ${dirs}
 do
     echo "Running pylint on directory '${dir}':"
     find "${dir}" -iname "*.py" | \
-        xargs pylint --load-plugins=pylint_protobuf --rcfile=${RCFILE}
+        xargs pylint --rcfile=${RCFILE}
     current_retval=$?
     if [ ${current_retval} -ne 0 ]
     then
