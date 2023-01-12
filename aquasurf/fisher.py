@@ -57,17 +57,17 @@ class FIM:
                     assert layer.depth_multiplier == 1
 
             except AssertionError:
-                logging.exception(f'Layer {layer.name} has unsupported attributes.')
+                logging.exception('Layer %s has unsupported attributes', layer.name)
                 raise
 
             if isinstance(layer, self.layers_with_weights):
                 if not layer.activation is tf.keras.activations.linear:
                     logging.exception(
-                        f'Layer {layer.name} has activation function {layer.activation.__name__}.' \
-                        ' Activation functions need to be implemented in separate layers.')
+                        'Layer %s has activation function %s. Activation functions need to be ' \
+                        'implemented in separate layers.', layer.name, layer.activation.__name__)
 
             if isinstance(layer, tf.keras.Model):
-                logging.exception(f'Layer {layer.name} is a nested model, which is not supported.')
+                logging.exception('Layer %s is a nested model, which is not supported.', layer.name)
 
 
     def _create_multi_output_model(self, model):
@@ -87,7 +87,7 @@ class FIM:
                     output_refs.append(layer_input_ref)
                 if layer_output_ref not in output_refs:
                     output_refs.append(layer_output_ref)
-        
+
         # preserve the original model outputs
         for output in model.outputs:
             if output.ref() not in output_refs:
@@ -148,7 +148,7 @@ class FIM:
         # Stacking the shifted and vectorized images produces the patches we want
         output = np.stack(shifted_inpts, axis=2)
 
-        # If the layer has a stride greater than one, there are some spatial locations that 
+        # If the layer has a stride greater than one, there are some spatial locations that
         # will be skipped.  We can account for the stride by creating a 2D binary mask the same
         # size as the convolved output, setting the mask to zero for the skipped locations,
         # vectorizing the mask, and then applying it to the output.
@@ -238,10 +238,10 @@ class FIM:
                                                             output_grad_eigenvalues,
                                                             log_scale)
         except ValueError:
-            logging.warning(f'Could not calculate eigenvalues for layer {layer.name}.' \
-                ' Using zeros instead.')
+            logging.warning('Could not calculate eigenvalues for layer %s. Using zeros instead.',
+                            layer.name)
             eigenvalues = np.zeros(input_covariance.shape[0] * output_gradient_covariance.shape[0])
-            
+
         return eigenvalues
 
 
@@ -269,10 +269,10 @@ class FIM:
                                                             output_grad_eigenvalues,
                                                             log_scale)
         except ValueError:
-            logging.warning(f'Could not calculate eigenvalues for layer {layer.name}.' \
-                ' Using zeros instead.')
+            logging.warning('Could not calculate eigenvalues for layer %s. Using zeros instead.',
+                            layer.name)
             eigenvalues = np.zeros(input_covariance.shape[0] * output_gradient_covariance.shape[0])
-            
+
         return eigenvalues
 
 
@@ -298,19 +298,19 @@ class FIM:
             layer_output_gradient = tape.gradient(loss, layer_output)
 
             if layer_output_gradient is None:
-                logging.warning(f'Could not calculate eigenvalues for layer {layer.name}.' \
-                    ' Skipping this layer.')
+                logging.warning('Could not calculate eigenvalues for layer %s. ' \
+                    'Skipping this layer.', layer.name)
                 continue
 
             if isinstance(layer, tf.keras.layers.Conv2D):
-                eigenvalues.append(self._calculate_eigenvalues_conv2d(layer, 
+                eigenvalues.append(self._calculate_eigenvalues_conv2d(layer,
                                                                       layer_input,
                                                                       layer_output_gradient,
                                                                       log_scale=log_scale,
                                                                       is_dw_conv=False))
 
             elif isinstance(layer, tf.keras.layers.DepthwiseConv2D):
-                eigenvalues.append(self._calculate_eigenvalues_conv2d(layer, 
+                eigenvalues.append(self._calculate_eigenvalues_conv2d(layer,
                                                                       layer_input,
                                                                       layer_output_gradient,
                                                                       log_scale=log_scale,

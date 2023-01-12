@@ -3,26 +3,29 @@ Database class for storing activation function data.
 """
 
 import gc
-import matplotlib.pyplot as plt
-import numpy as np
-import os
 import sqlite3
-import sys
-import tensorflow as tf
 
 from itertools import product
-from numpy import inf, nan # Needed for evaluating data stored as strings
+
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+
+# Needed for evaluating data stored as strings
+from numpy import inf # pylint: disable=unused-import
+from numpy import nan # pylint: disable=unused-import
 from sklearn.neighbors import KNeighborsRegressor
 from tqdm import tqdm
 from umap import UMAP
 
-# Hacky path manipulation.  Eventually we should make it a proper package.
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from activation import ActivationFunction, N_ARY_FUNCTIONS, BINARY_FUNCTIONS, UNARY_FUNCTIONS
-from fisher import FIM
+from aquasurf.activation import ActivationFunction
+from aquasurf.activation import BINARY_FUNCTIONS
+from aquasurf.activation import N_ARY_FUNCTIONS
+from aquasurf.activation import UNARY_FUNCTIONS
+from aquasurf.fisher import FIM
 
 
-class ActivationFunctionDatabase:
+class ActivationFunctionDatabase: # pylint: disable=too-many-instance-attributes
     """
     This is the base class for activation function databases.  Subclasses must
     override the build_model method to build a model with the given activation,
@@ -155,13 +158,13 @@ class ActivationFunctionDatabase:
         self.conn.commit()
 
 
-    def print_n(self, n=None):
+    def print_top_n(self, top_n=None):
         """
         Print the top n elements in the database.
         If n is None, print all elements.
         """
         self.cursor.execute('SELECT * FROM activation_functions')
-        for row in self.cursor.fetchall()[:n]:
+        for row in self.cursor.fetchall()[:top_n]:
             print(row)
 
 
@@ -173,7 +176,8 @@ class ActivationFunctionDatabase:
         num_unique_fns = self.cursor.execute(
             'SELECT COUNT(DISTINCT fn_outputs) FROM activation_functions').fetchone()[0]
         num_unique_with_eigs = self.cursor.execute(
-            'SELECT COUNT(DISTINCT fn_outputs) FROM activation_functions WHERE fisher_eigs IS NOT NULL').fetchone()[0]
+            'SELECT COUNT(DISTINCT fn_outputs) FROM activation_functions WHERE ' \
+                'fisher_eigs IS NOT NULL').fetchone()[0]
         num_evaluated = self.cursor.execute(
             'SELECT COUNT(*) FROM activation_functions WHERE status = "done"').fetchone()[0]
         num_running = self.cursor.execute(
@@ -219,8 +223,8 @@ class ActivationFunctionDatabase:
         fisher_eigs = []
         for row in data:
             fn_name = row[0]
-            outputs = eval(row[1])
-            eigs = eval(row[2])
+            outputs = eval(row[1]) # pylint: disable=eval-used
+            eigs = eval(row[2]) # pylint: disable=eval-used
             # Really we would check len(eigs) > 0, but for some reason some ResNet-56 entries
             # have just three values, and a few MobileViTv2-0.5 entries have 339 values,
             # and we don't want those.
@@ -242,7 +246,7 @@ class ActivationFunctionDatabase:
         """
         Suggest a function to try next based on predicted accuracy.
         """
-        # If there are any baseline functions that haven't been 
+        # If there are any baseline functions that haven't been
         # evaluated (or aren't running), try one of those first.
         self.cursor.execute(
             'SELECT fn_name FROM activation_functions '\
@@ -350,14 +354,14 @@ class ActivationFunctionDatabase:
         Calculate the eigenvalues of the Fisher information matrix for all
         activation functions in the database.  If from_scratch is True, then
         recalculate the eigenvalues for all functions.  If fn_names_list is
-        provided, then only calculate the eigenvalues for those functions. 
+        provided, then only calculate the eigenvalues for those functions.
         If return_eigs is True, then immediately return the eigenvalues instead of
         storing them in the database.
         """
         if from_scratch:
             self.cursor.execute('UPDATE activation_functions SET fisher_eigs = NULL')
             self.conn.commit()
-        
+
         if fn_names_list is None:
             unique_fns = self.get_unique_fn_names()
             suffix = '(all)'
@@ -367,7 +371,8 @@ class ActivationFunctionDatabase:
         pbar = tqdm(total=len(unique_fns), desc=f'Calculating Fisher eigenvalues {suffix}')
 
         while True:
-            # Get the unique activation functions in the database for which we don't have fisher eigs.
+            # Get the unique activation functions in the database
+            # for which we don't have fisher eigs.
             if fn_names_list is None:
                 fn_names = self.get_unique_fn_names(condition='fisher_eigs IS NULL')
                 fn_names_evaluated = self.get_unique_fn_names(condition='fisher_eigs IS NOT NULL')
@@ -379,7 +384,7 @@ class ActivationFunctionDatabase:
             if len(fn_names) == 0:
                 break
 
-            # Otherwise, choose random functions to evaluate.  We'll evaluate 100 in this job 
+            # Otherwise, choose random functions to evaluate.  We'll evaluate 100 in this job
             # to avoid calling the expensive get_unique_fn_names too many times.
             np.random.seed()
             fn_names = np.random.choice(fn_names, min(100, len(fn_names)), replace=False)
@@ -393,15 +398,16 @@ class ActivationFunctionDatabase:
                     if return_eigs:
                         return eigenvalues_by_layer
                     eigenvalue_cdfs = []
-                    for eigenvalues, num_weights in zip(eigenvalues_by_layer, self.weights_per_layer):
+                    for eigenvalues, num_weights in zip(
+                            eigenvalues_by_layer, self.weights_per_layer):
                         num_bins = num_weights // 100
                         bins = np.linspace(-100, 100, num_bins)
                         pdf, _, _ = plt.hist(eigenvalues, bins=bins, density=True)
                         cdf = np.cumsum(pdf)
                         cdf /= cdf[-1]
                         eigenvalue_cdfs.extend(list(cdf))
-                except (ValueError, ZeroDivisionError) as e:
-                    print(f'Error calculating eigenvalues for {fn_name}: {e}')
+                except (ValueError, ZeroDivisionError) as err:
+                    print(f'Error calculating eigenvalues for {fn_name}: {err}')
                     eigenvalue_cdfs = []
 
                 eigenvalue_cdfs = str(eigenvalue_cdfs)
