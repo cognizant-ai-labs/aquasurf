@@ -83,6 +83,21 @@ def second_moment(afn):
     return integrate.quad(lambda x : math.pow(afn(x), 2) * norm.pdf(x), -INF, INF)[0]
 
 class ActivationFunction(Layer):
+    """
+    This class implements custom activation functions.  They are constructed by providing
+    a string that specifies the function.  The string is parsed and the function is
+    constructed as a directed acyclic graph of tensorflow operations.  The resulting
+    ActivationFunction can be used as an ordinary TensorFlow Layer.  For example:
+
+    x = ActivationFunction(fn_name='max(relu(x),cosh(elu(x)))')(x)
+
+    or
+
+    x = ActivationFunction(fn_name='sum_n(abs(x),swish(x),sigmoid(x))')(x)
+
+    If normalize=True is passed, the function is modified so that the output has
+    mean zero and variance one, in expectation.
+    """
     def __init__(self, fn_name, normalize=False, **kwargs):
         super().__init__(**kwargs)
         # remove whitespace
@@ -91,6 +106,9 @@ class ActivationFunction(Layer):
         self.normalize = normalize
 
     def construct_function(self, fn_name):
+        """
+        Parse the function name and construct the function as a directed acyclic graph
+        """
         if fn_name == 'x':
             # we are at the input
             return tf.identity
@@ -128,6 +146,9 @@ class ActivationFunction(Layer):
         return lambda x : operation(arg(x))
 
     def build(self, input_shape): # pylint: disable=unused-argument
+        """
+        Build the function
+        """
         callable_fn = self.construct_function(self.fn_name)
         if self.normalize:
             gauss_mean = gaussian_mean(callable_fn)
@@ -139,9 +160,15 @@ class ActivationFunction(Layer):
             self.callable_fn = callable_fn
 
     def call(self, inputs):
+        """
+        Call the function
+        """
         return self.callable_fn(inputs)
 
     def get_config(self):
+        """
+        Get the config.  Used for serialization.
+        """
         config = super().get_config()
         config.update({'fn_name'   : self.fn_name,
                        'normalize' : self.normalize})
