@@ -29,6 +29,13 @@ from scipy.linalg import eigh
 
 
 class FIM:
+    """
+    This class is responsible for calculating the eigenvalues of the Fisher Information
+    Matrix (FIM) associated with the model's predictive distribution at initialization.
+
+    Initialize the class with a model, data samples, labels, and the loss function, and then
+    call the `calculate_eigenvalues` method to get the eigenvalues of the FIM.
+    """
     def __init__(self, model, samples, labels, loss_fn):
         """
         :param model: A TF/Keras model
