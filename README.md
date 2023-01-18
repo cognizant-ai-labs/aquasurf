@@ -1,5 +1,5 @@
 # aquasurf
-Efficient Activation Function Optimization through Surrogate Modeling
+The paper Efficient Activation Function Optimization through Surrogate Modeling is available [here](https://arxiv.org/abs/2301.05785).
 
 ---
 
