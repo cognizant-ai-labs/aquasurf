@@ -116,6 +116,21 @@ class ActivationFunctionDatabase: # pylint: disable=too-many-instance-attributes
         self.conn.commit()
 
 
+    def soft_clean(self):
+        """
+        Reset the status for all functions for which we don't have a val_acc, but keep results
+        for runs that did finish.
+        """
+        self.cursor.execute(
+        'UPDATE activation_functions SET status = "not evaluated", ' \
+            'train_acc = NULL, train_loss = NULL, val_acc = NULL, val_loss = NULL, ' \
+            'test_acc = NULL, test_loss = NULL, runtime = NULL, WandB_config = NULL, ' \
+            'WandB_summary = NULL ' \
+                'WHERE val_acc IS NULL'
+        )
+        self.conn.commit()
+
+
     def get_fn_names_from_schema(self, schema):
         """
         Get the names of the activation functions from the given schema.

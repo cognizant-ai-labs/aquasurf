@@ -12,7 +12,7 @@
 from setuptools import setup, find_packages
 
 setup(name='aquasurf',
-    version='0.0.1',
+    version='0.0.2',
     description='Efficient Activation Function Optimization through Surrogate Modeling',
     author='@garrettbingham',
     author_email='garrett.bingham@cognizant.com',
