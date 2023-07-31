@@ -53,6 +53,10 @@ class ActivationFunctionDatabase: # pylint: disable=too-many-instance-attributes
         self.cursor.execute('PRAGMA busy_timeout = 3600000')
         self.conn.commit()
 
+        # Increase the max database size
+        self.cursor.execute('PRAGMA max_page_count = 2147483646')
+        self.conn.commit()
+
         # Defined in subclasses
         self.samples = None
         self.labels = None
