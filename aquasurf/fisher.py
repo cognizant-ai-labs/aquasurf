@@ -267,9 +267,12 @@ class FIM:
         """
         Calculate the eigenvalues associated with a Dense layer.  See [1].
         """
+        # Collapse all non-batch dimensions
+        layer_input = np.reshape(layer_input.numpy(), (layer_input.shape[0], -1))
+        layer_output_gradient = np.reshape(layer_output_gradient.numpy(), (layer_output_gradient.shape[0], -1))
         # Transpose the input and output gradient so that each column represents a single sample.
-        layer_input = layer_input.numpy().T
-        layer_output_gradient = layer_output_gradient.numpy().T
+        layer_input = layer_input.T
+        layer_output_gradient = layer_output_gradient.T
         # If the layer has a bias, prepend a homogeneous row of ones to the input.
         if layer.use_bias:
             layer_input = np.concatenate([np.ones((1, layer_input.shape[1])), layer_input], axis=0)
