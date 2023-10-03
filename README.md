@@ -1,6 +1,9 @@
 # aquasurf
 The paper Efficient Activation Function Optimization through Surrogate Modeling is available [here](https://arxiv.org/abs/2301.05785).
 
+Looking for the activation function benchmark datasets `Act-Bench-CNN`, `Act-Bench-ResNet`, and `Act-Bench-ViT`?  You can find them [here](https://github.com/cognizant-ai-labs/act-bench/).
+
+
 ---
 
 ## Installation
