@@ -70,6 +70,11 @@ UNARY_FUNCTIONS = {
     'softplus' : tf.nn.softplus,
     'softsign' : tf.nn.softsign,
     'hard_sigmoid' : tf.keras.activations.hard_sigmoid,
+
+    'elish' : lambda x : tf.where(tf.greater(x,0), x / (1 + tf.math.exp(-x)), (tf.math.exp(x)-1) / (1 + tf.math.exp(-x))),
+    'leakyrelu' : lambda x : tf.where(tf.greater(x, 0), x, 0.01 * x),
+    'mish' : lambda x : x * tf.math.tanh(tf.keras.activations.softplus(x)),
+    'gelu' : tf.keras.activations.gelu,
 }
 
 FUNCTIONS = {**N_ARY_FUNCTIONS, **BINARY_FUNCTIONS, **UNARY_FUNCTIONS}

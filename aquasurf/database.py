@@ -258,7 +258,8 @@ class ActivationFunctionDatabase: # pylint: disable=too-many-instance-attributes
             # Really we would check len(eigs) > 0, but for some reason some ResNet-56 entries
             # have just three values, and a few MobileViTv2-0.5 entries have 339 values,
             # and we don't want those.
-            if len(eigs) > 400 and all(np.isfinite(eigs)) and all(np.isfinite(outputs)):
+            # print(len(eigs))
+            if len(eigs) > 141000 and all(np.isfinite(eigs)) and all(np.isfinite(outputs)):
                 fn_names.append(fn_name)
                 fn_outputs.append(outputs)
                 fisher_eigs.append(eigs)
